@@ -3,7 +3,9 @@ package main
 import (
 	_ "embed"
 	"image/color"
+	"machine"
 
+	"tinygo.org/x/drivers/ws2812"
 	"tinygo.org/x/tinydraw"
 	"tinygo.org/x/tinyfont"
 	"tinygo.org/x/tinyfont/freesans"
@@ -15,13 +17,27 @@ const (
 	HEIGHT = 240
 )
 
-var rainbow []color.RGBA
-var pressed uint8
-var quit bool
+var (
+	red     = color.RGBA{255, 0, 0, 255}
+	blue    = color.RGBA{0, 0, 255, 255}
+	rainbow []color.RGBA
+	pressed uint8
+	quit    bool
+)
 
 func Badge() {
 	quit = false
 	display.FillScreen(colors[BLACK])
+
+	neo := machine.NEOPIXELS
+	neo.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	leds := ws2812.New(neo)
+	ledColors := make([]color.RGBA, 2)
+	ledColors[0] = blue
+	ledColors[1] = red
+
+	// configure LED strip driver
+	leds.WriteColors(ledColors)
 
 	rainbow = make([]color.RGBA, 256)
 	for i := 0; i < 256; i++ {
@@ -81,7 +97,7 @@ func myNameIsRainbow(name string) {
 	myNameIs(name)
 
 	w32, size := getFontWidthSize(name)
-	for i := 0; i < 100; i++ {
+	for i := 80; i < 200; i++ {
 		if size == 24 {
 			tinyfont.WriteLineColors(&display, &freesans.Bold24pt7b, (WIDTH-int16(w32))/2, 140, name, rainbow[i:])
 		} else if size == 18 {
@@ -103,28 +119,12 @@ func blinkyRainbow(topline, bottomline string) {
 	display.FillScreen(colors[WHITE])
 
 	// calculate the width of the text so we could center them later
-	w32top, sizetop := getFontWidthSize(topline)
-	w32bottom, sizebottom := getFontWidthSize(bottomline)
-	for i := int16(0); i < 12; i++ {
-		// show black text
-		if sizetop == 24 {
-			tinyfont.WriteLine(&display, &freesans.Bold24pt7b, (WIDTH-int16(w32top))/2, 90, topline, getRainbowRGB(uint8(i*12)))
-		} else if sizetop == 18 {
-			tinyfont.WriteLine(&display, &freesans.Bold18pt7b, (WIDTH-int16(w32top))/2, 90, topline, getRainbowRGB(uint8(i*12)))
-		} else if sizetop == 12 {
-			tinyfont.WriteLine(&display, &freesans.Bold12pt7b, (WIDTH-int16(w32top))/2, 90, topline, getRainbowRGB(uint8(i*12)))
-		} else {
-			tinyfont.WriteLine(&display, &freesans.Bold9pt7b, (WIDTH-int16(w32top))/2, 90, topline, getRainbowRGB(uint8(i*12)))
-		}
-		if sizebottom == 24 {
-			tinyfont.WriteLine(&display, &freesans.Bold24pt7b, (WIDTH-int16(w32bottom))/2, 180, bottomline, getRainbowRGB(uint8(i*12)))
-		} else if sizebottom == 18 {
-			tinyfont.WriteLine(&display, &freesans.Bold18pt7b, (WIDTH-int16(w32bottom))/2, 180, bottomline, getRainbowRGB(uint8(i*12)))
-		} else if sizebottom == 12 {
-			tinyfont.WriteLine(&display, &freesans.Bold12pt7b, (WIDTH-int16(w32bottom))/2, 180, bottomline, getRainbowRGB(uint8(i*12)))
-		} else {
-			tinyfont.WriteLine(&display, &freesans.Bold9pt7b, (WIDTH-int16(w32bottom))/2, 180, bottomline, getRainbowRGB(uint8(i*12)))
-		}
+	w32top, _ := getFontWidthSize(topline)
+	w32bottom, _ := getFontWidthSize(bottomline)
+	for i := int16(6); i < 20; i++ {
+		tinyfont.WriteLine(&display, &freesans.Bold24pt7b, (WIDTH-int16(w32top))/2, 90, topline, getRainbowRGB(uint8(i*12)))
+
+		tinyfont.WriteLine(&display, &freesans.Bold18pt7b, (WIDTH-int16(w32bottom))/2, 180, bottomline, getRainbowRGB(uint8(i*12)))
 
 		if !btnB.Get() {
 			quit = true
@@ -141,13 +141,13 @@ func comeToMyTalk() {
 		tinyfont.WriteLine(&display, &freesans.Bold18pt7b, (WIDTH-int16(w32))/2, 35, "Come to my talk", colors[RED])
 
 		w32, _ = tinyfont.LineWidth(&freesans.Oblique18pt7b, "Putting an end to")
-		tinyfont.WriteLine(&display, &freesans.Oblique18pt7b, (WIDTH-int16(w32))/2, 90, "Putting an end to", colors[BLACK])
+		tinyfont.WriteLine(&display, &freesans.Oblique18pt7b, (WIDTH-int16(w32))/2, 90, "Putting an end to", blue)
 
 		w32, _ = tinyfont.LineWidth(&freesans.Oblique18pt7b, "Makefiles in go proj.")
-		tinyfont.WriteLine(&display, &freesans.Oblique18pt7b, (WIDTH-int16(w32))/2, 130, "Makefiles in go proj.", colors[BLACK])
+		tinyfont.WriteLine(&display, &freesans.Oblique18pt7b, (WIDTH-int16(w32))/2, 130, "Makefiles in go proj.", blue)
 
 		w32, _ = tinyfont.LineWidth(&freesans.Oblique18pt7b, "with GoReleaser")
-		tinyfont.WriteLine(&display, &freesans.Oblique18pt7b, (WIDTH-int16(w32))/2, 170, "with GoReleaser", colors[BLACK])
+		tinyfont.WriteLine(&display, &freesans.Oblique18pt7b, (WIDTH-int16(w32))/2, 170, "with GoReleaser", blue)
 
 		w32, _ = tinyfont.LineWidth(&freesans.Bold18pt7b, "ud2218a Sat. 15:00")
 		tinyfont.WriteLine(&display, &freesans.Bold18pt7b, (WIDTH-int16(w32))/2, 225, "ud2218a Sat. 15:00", colors[RED])
