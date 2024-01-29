@@ -24,14 +24,17 @@ const (
 	GREEN
 )
 
-var colors = []color.RGBA{
-	color.RGBA{0, 0, 0, 255},
-	color.RGBA{255, 255, 255, 255},
-	color.RGBA{250, 0, 0, 255},
-	color.RGBA{0, 0, 250, 255},
-	color.RGBA{0, 250, 0, 255},
-	color.RGBA{160, 160, 160, 255},
-}
+var (
+	colors = []color.RGBA{
+		color.RGBA{0, 0, 0, 255},
+		color.RGBA{255, 255, 255, 255},
+		color.RGBA{250, 0, 0, 255},
+		color.RGBA{0, 0, 250, 255},
+		color.RGBA{0, 250, 0, 255},
+		color.RGBA{160, 160, 160, 255},
+	}
+	ledColors []color.RGBA
+)
 
 func main() {
 
@@ -59,9 +62,14 @@ func main() {
 		Height:   320,
 	})
 
+	// Initialize the "2-led strip"
 	neo := machine.NEOPIXELS
 	neo.Configure(machine.PinConfig{Mode: machine.PinOutput})
 	leds = ws2812.New(neo)
+	ledColors = make([]color.RGBA, 2)
+	ledColors[0] = colors[BLACK]
+	ledColors[1] = colors[BLACK]
+	leds.WriteColors(ledColors)
 
 	bzrPin = machine.SPEAKER
 	bzrPin.Configure(machine.PinConfig{Mode: machine.PinOutput})
