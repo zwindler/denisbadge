@@ -20,15 +20,16 @@ const (
 	BLACK = iota
 	WHITE
 	RED
-	SNAKE
-	TEXT
+	BLUE
+	GREEN
 )
 
 var colors = []color.RGBA{
 	color.RGBA{0, 0, 0, 255},
 	color.RGBA{255, 255, 255, 255},
 	color.RGBA{250, 0, 0, 255},
-	color.RGBA{0, 200, 0, 255},
+	color.RGBA{0, 0, 250, 255},
+	color.RGBA{0, 250, 0, 255},
 	color.RGBA{160, 160, 160, 255},
 }
 
@@ -82,8 +83,7 @@ func main() {
 	btnDown.Configure(machine.PinConfig{Mode: machine.PinInput})
 	btnRight.Configure(machine.PinConfig{Mode: machine.PinInput})
 
-	black := color.RGBA{0, 0, 0, 255}
-	display.FillScreen(black)
+	display.FillScreen(colors[BLACK])
 
 	Badge()
 }

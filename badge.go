@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"image/color"
 	"machine"
+	"time"
 
 	"tinygo.org/x/drivers/ws2812"
 	"tinygo.org/x/tinydraw"
@@ -18,42 +19,32 @@ const (
 )
 
 var (
-	red     = color.RGBA{255, 0, 0, 255}
-	blue    = color.RGBA{0, 0, 255, 255}
-	rainbow []color.RGBA
-	pressed uint8
-	quit    bool
+	ledColors []color.RGBA
+	rainbow   []color.RGBA
+	pressed   uint8
+	quit      bool
 )
 
 func Badge() {
 	quit = false
 	display.FillScreen(colors[BLACK])
 
+	// Initialize the "2-led strip"
 	neo := machine.NEOPIXELS
 	neo.Configure(machine.PinConfig{Mode: machine.PinOutput})
-	leds := ws2812.New(neo)
-	ledColors := make([]color.RGBA, 2)
-	ledColors[0] = blue
-	ledColors[1] = red
-
-	// configure LED strip driver
+	leds = ws2812.New(neo)
+	ledColors = make([]color.RGBA, 2)
+	ledColors[0] = color.RGBA{0, 0, 100, 255}
+	ledColors[1] = color.RGBA{100, 0, 0, 255}
 	leds.WriteColors(ledColors)
 
-	rainbow = make([]color.RGBA, 256)
-	for i := 0; i < 256; i++ {
-		rainbow[i] = getRainbowRGB(uint8(i))
-	}
-
 	for {
-		myNameIsRainbow("Denis")
-		if quit {
-			break
-		}
-		blinkyRainbow("@zwindler", "Denis Germain")
-		if quit {
-			break
-		}
+		myNameIs("Denis")
+		time.Sleep(time.Second * 5)
+		blinkyDenis("@zwindler", "Denis Germain")
+		time.Sleep(time.Second * 5)
 		comeToMyTalk()
+		time.Sleep(time.Second * 5)
 	}
 }
 
@@ -61,13 +52,13 @@ func myNameIs(name string) {
 	display.FillScreen(colors[WHITE])
 
 	var r int16 = 10
-
-	// black corners detail
-	display.FillRectangle(0, 0, r, r, colors[BLACK])
-	display.FillRectangle(0, HEIGHT-r, r, r, colors[BLACK])
-	display.FillRectangle(WIDTH-r, 0, r, r, colors[BLACK])
-	display.FillRectangle(WIDTH-r, HEIGHT-r, r, r, colors[BLACK])
-
+	/*
+		// black corners detail
+		display.FillRectangle(0, 0, r, r, colors[BLACK])
+		display.FillRectangle(0, HEIGHT-r, r, r, colors[BLACK])
+		display.FillRectangle(WIDTH-r, 0, r, r, colors[BLACK])
+		display.FillRectangle(WIDTH-r, HEIGHT-r, r, r, colors[BLACK])
+	*/
 	// round corners
 	tinydraw.FilledCircle(&display, r, r, r, colors[RED])
 	tinydraw.FilledCircle(&display, WIDTH-r-1, r, r, colors[RED])
@@ -82,7 +73,6 @@ func myNameIs(name string) {
 	display.FillRectangle(r, HEIGHT-r-1, WIDTH-2*r-1, r+1, colors[RED])
 	display.FillRectangle(0, HEIGHT-3*r-1, WIDTH, 2*r, colors[RED])
 
-	// top text : my NAME is
 	w32, _ := tinyfont.LineWidth(&freesans.Bold18pt7b, "HELLO")
 	tinyfont.WriteLine(&display, &freesans.Bold18pt7b, (WIDTH-int16(w32))/2, 34, "HELLO", colors[WHITE])
 
@@ -90,84 +80,41 @@ func myNameIs(name string) {
 	tinyfont.WriteLine(&display, &freesans.Oblique12pt7b, (WIDTH-int16(w32))/2, 54, "my name is", colors[WHITE])
 
 	// gophers
-	tinyfont.WriteLineColors(&display, &gophers.Regular58pt, WIDTH-84, 208, "BE", []color.RGBA{getRainbowRGB(100), getRainbowRGB(200)})
+	tinyfont.WriteLine(&display, &gophers.Regular58pt, WIDTH-84, 208, "BE", colors[RED])
+
+	w32, _ = getFontWidthSize(name)
+	tinyfont.WriteLine(&display, &freesans.Bold24pt7b, (WIDTH-int16(w32))/2, 140, name, colors[RED])
 }
 
-func myNameIsRainbow(name string) {
-	myNameIs(name)
-
-	w32, size := getFontWidthSize(name)
-	for i := 80; i < 200; i++ {
-		if size == 24 {
-			tinyfont.WriteLineColors(&display, &freesans.Bold24pt7b, (WIDTH-int16(w32))/2, 140, name, rainbow[i:])
-		} else if size == 18 {
-			tinyfont.WriteLineColors(&display, &freesans.Bold18pt7b, (WIDTH-int16(w32))/2, 140, name, rainbow[i:])
-		} else if size == 12 {
-			tinyfont.WriteLineColors(&display, &freesans.Bold12pt7b, (WIDTH-int16(w32))/2, 140, name, rainbow[i:])
-		} else {
-			tinyfont.WriteLineColors(&display, &freesans.Bold9pt7b, (WIDTH-int16(w32))/2, 140, name, rainbow[i:])
-		}
-		i += 2
-		if !btnB.Get() {
-			quit = true
-			break
-		}
-	}
-}
-
-func blinkyRainbow(topline, bottomline string) {
+func blinkyDenis(topline, bottomline string) {
 	display.FillScreen(colors[WHITE])
 
 	// calculate the width of the text so we could center them later
 	w32top, _ := getFontWidthSize(topline)
 	w32bottom, _ := getFontWidthSize(bottomline)
-	for i := int16(6); i < 20; i++ {
-		tinyfont.WriteLine(&display, &freesans.Bold24pt7b, (WIDTH-int16(w32top))/2, 90, topline, getRainbowRGB(uint8(i*12)))
+	tinyfont.WriteLine(&display, &freesans.Bold24pt7b, (WIDTH-int16(w32top))/2, 90, topline, colors[RED])
 
-		tinyfont.WriteLine(&display, &freesans.Bold18pt7b, (WIDTH-int16(w32bottom))/2, 180, bottomline, getRainbowRGB(uint8(i*12)))
-
-		if !btnB.Get() {
-			quit = true
-			break
-		}
-	}
+	tinyfont.WriteLine(&display, &freesans.Bold18pt7b, (WIDTH-int16(w32bottom))/2, 180, bottomline, colors[RED])
 }
 
 func comeToMyTalk() {
 	display.FillScreen(colors[WHITE])
 
-	for i := 0; i < 10; i++ {
-		w32, _ := tinyfont.LineWidth(&freesans.Bold18pt7b, "Come to my talk")
-		tinyfont.WriteLine(&display, &freesans.Bold18pt7b, (WIDTH-int16(w32))/2, 35, "Come to my talk", colors[RED])
+	w32, _ := tinyfont.LineWidth(&freesans.Bold18pt7b, "Come to my talk")
+	tinyfont.WriteLine(&display, &freesans.Bold18pt7b, (WIDTH-int16(w32))/2, 35, "Come to my talk", colors[RED])
 
-		w32, _ = tinyfont.LineWidth(&freesans.Oblique18pt7b, "Putting an end to")
-		tinyfont.WriteLine(&display, &freesans.Oblique18pt7b, (WIDTH-int16(w32))/2, 90, "Putting an end to", blue)
+	w32, _ = tinyfont.LineWidth(&freesans.Oblique18pt7b, "Putting an end to")
+	tinyfont.WriteLine(&display, &freesans.Oblique18pt7b, (WIDTH-int16(w32))/2, 90, "Putting an end to", colors[BLUE])
 
-		w32, _ = tinyfont.LineWidth(&freesans.Oblique18pt7b, "Makefiles in go proj.")
-		tinyfont.WriteLine(&display, &freesans.Oblique18pt7b, (WIDTH-int16(w32))/2, 130, "Makefiles in go proj.", blue)
+	w32, _ = tinyfont.LineWidth(&freesans.Oblique18pt7b, "Makefiles in go proj.")
+	tinyfont.WriteLine(&display, &freesans.Oblique18pt7b, (WIDTH-int16(w32))/2, 130, "Makefiles in go proj.", colors[BLUE])
 
-		w32, _ = tinyfont.LineWidth(&freesans.Oblique18pt7b, "with GoReleaser")
-		tinyfont.WriteLine(&display, &freesans.Oblique18pt7b, (WIDTH-int16(w32))/2, 170, "with GoReleaser", blue)
+	w32, _ = tinyfont.LineWidth(&freesans.Oblique18pt7b, "with GoReleaser")
+	tinyfont.WriteLine(&display, &freesans.Oblique18pt7b, (WIDTH-int16(w32))/2, 170, "with GoReleaser", colors[BLUE])
 
-		w32, _ = tinyfont.LineWidth(&freesans.Bold18pt7b, "ud2218a Sat. 15:00")
-		tinyfont.WriteLine(&display, &freesans.Bold18pt7b, (WIDTH-int16(w32))/2, 225, "ud2218a Sat. 15:00", colors[RED])
+	w32, _ = tinyfont.LineWidth(&freesans.Bold18pt7b, "ud2218a Sat. 15:00")
+	tinyfont.WriteLine(&display, &freesans.Bold18pt7b, (WIDTH-int16(w32))/2, 225, "ud2218a Sat. 15:00", colors[RED])
 
-		if !btnB.Get() {
-			quit = true
-			break
-		}
-	}
-}
-
-func getRainbowRGB(i uint8) color.RGBA {
-	if i < 85 {
-		return color.RGBA{i * 3, 255 - i*3, 0, 255}
-	} else if i < 170 {
-		i -= 85
-		return color.RGBA{255 - i*3, 0, i * 3, 255}
-	}
-	i -= 170
-	return color.RGBA{0, i * 3, 255 - i*3, 255}
 }
 
 func getFontWidthSize(text string) (w32 uint32, size byte) {
